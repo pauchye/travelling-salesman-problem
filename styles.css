@@ -1,0 +1,16 @@
+.svg-cont {
+    height: 600px;
+    width: 600px;
+    background-color: aquamarine;
+    border-radius: 40px;
+}
+
+.graph-cont {
+    height: 200px;
+    width: 600px;
+    border: 1px solid black;
+}
+
+.css-body {
+    display: flex;
+}
