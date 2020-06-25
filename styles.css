@@ -1,16 +1,123 @@
+body, text, button{
+    background-color: #8bb4be2a;
+    /* padding: 10px;
+    font-family: 'Courier New', Courier, monospace; */
+    /* font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif; */
+    font-family: monospace;
+}
+
+body {
+    padding: 10px;
+}
+
+button {
+    border: 1px solid grey;
+    margin: 5px 0px;
+    padding: 3px;
+
+}
+
+.slider {
+  -webkit-appearance: none;
+  width: 120px;
+  height: 10px;
+  border-radius: 5px;  
+  background: #c0c0c0;
+  outline: none;
+  opacity: 0.7;
+  -webkit-transition: .2s;
+  transition: opacity .2s;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%; 
+  background: #3d4e52;
+  cursor: pointer;
+}
+
 .svg-cont {
-    height: 600px;
+    margin-top: 7px;
+    height: 570px;
     width: 600px;
-    background-color: aquamarine;
-    border-radius: 40px;
+    background-color: white;
+    border: 1px solid grey;
+    box-shadow: 0 0 6px #07070756;
+    /* border-radius: 40px; */
+}
+
+.body-buttons {
+    margin-top: 5px;
+    margin-bottom: 5px;
 }
 
 .graph-cont {
-    height: 200px;
+    background-color: white;
+    height: 130px;
     width: 600px;
-    border: 1px solid black;
+    border: 1px solid grey;
+    box-shadow: 0 0 6px #07070756;
+}
+
+.css-links {
+    display: flex;
+    justify-content: flex-end;
+    
+}
+
+.css-links div {
+    padding: 10px;
 }
 
 .css-body {
     display: flex;
+    justify-content: left;
 }
+
+.css-graphs {
+    display: block;
+    width: 640px;
+    padding-right: 10px;
+    /* border: 1px solid black; */
+}
+
+.css-right {
+    /* border: 1px solid black; */
+    padding-right: 40px;
+    padding-left: 10px;
+    width: auto;
+}
+
+.path-helper {
+    opacity: 30%;
+    background-color: rgba(236, 40, 138, 0.5);
+    color: rgba(207, 28, 52, 0.5);
+}
+
+.helper-circle {
+    opacity: 30%;
+    background-color: crimson;
+    color: crimson;
+}
+
+.hidden {
+    display: none;
+}
+
+.visible {
+    display: block;
+}
+
+/* rect {
+    fill: steelblue;
+  } */
+
+/* .bar {
+    /* fill: red , yellow); */
+    /* background-image: linear-gradient(to right, red , yellow); */
+    /* fill: #4e5f6665;
+    margin-top: 5px;
+} */ 

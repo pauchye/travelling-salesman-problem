@@ -5,29 +5,182 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles.css">
     <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="https://d3js.org/d3-transition.v1.min.js"></script>
+    <script src="https://kit.fontawesome.com/080cd15705.js" crossorigin="anonymous"></script>
     <title>Document</title>
+    <style>
+
+        .axis {
+            font-size: 13px;
+        }
+        
+        .axis path,
+        .axis line {
+            fill: none;
+            display: none;
+        }
+        
+        .label {
+            font-size: 13px;
+        }
+    </style>
 </head>
 <body class="css-body">
-    <div>
-      <div class='graph-cont' id='graph'></div>  
+    <div class="css-graphs">
+      <svg class='graph-cont' id='graph'></svg>  
       <svg id="svg" class='svg-cont'>
         <rect  />
       </svg>  
     </div>
     
-      <div>
-         <input id="range" type="range" value=0 min=1 max=30>
-         <button id="run">run</button> 
-         <button id="clear">clear</button> 
-         
-         <button id="random">random</button>
-         <button id="firstalg">first algo</button>
-         <button id="secondalg">second algo</button>
+      <div class="css-right">
+          <div>
+                <h3>Travelling salesman problem</h3>
+          </div>
+          <div>
+            <input id="range" type="range" value=0 min=1 max=30 class="slider">
+            <div class="body-buttons">
+              <button id="clear">clear</button> 
+              <button id="random">random</button>
+              <button id="permutations">permutations</button>
+              <button id="nearestneighbor">nearest neighbor</button>
+              <button id="christofides–serdyukov">min span tree</button>  
+            </div>
+            
+          </div>
+          <div class="css-links">
+              <div>
+                 <a href="https://github.com/pauchye"><i class="fa fa-github fa-lg" aria-hidden="true"></i></a> 
+              </div>
+              <div>
+                 <a href="https://www.linkedin.com/in/olga-smirnova-assoc-aia-17b73b41/"><i class="fa fa-linkedin  fa-lg" aria-hidden="true"></i></i></a>
+              </div>
+              <div>Olga Smirnova</div>
+          </div>
+          <div>
+              <div id="random-text" class="hidden">
+                <p>The obvious and the least accurate solution. Complexity O(n).</p>
+              </div>
+              <div id="perm-text" class="hidden">
+               <p>The most accurate, complex and the least efective solution. Complexity O(n!).</p>   
+              </div>
+              <div id="nn-text" class="hidden">
+                  <p>
+                The nearest neighbour (NN) algorithm (a greedy algorithm) lets the salesman choose the nearest unvisited city as his next move. 
+                This algorithm quickly yields an effectively short route. 
+                For N cities randomly distributed on a plane, the algorithm on average yields a path 25% longer than the shortest possible path.
+                However, there exist many specially arranged city distributions which make the NN algorithm give the worst route. 
+                <a href="https://en.wikipedia.org/wiki/Nearest_neighbour_algorithm"> Read more </a>
+                </p>
+              </div>
+              <div id="cs-text" class="hidden">
+                  <p>
+                  Christofides–Serdyukov algorithm is an approximation algorithm that guarantees that its solutions will be within a factor of 3/2 of the optimal solution length.
+                  </p>
+              </div>
+
+          </div>
+          <div>
+            <div id="random-code" class="hidden">
+                <pre>
+     No code snippet for this one. Nope.                
+                </pre>
+               
+            </div>
+            <div id="perm-code" class="hidden">
+    <pre>
+        const permutations = (array, memo = {}) => {
+            let result = [];
+            const perm = (arr, sub = []) => {
+            if (arr.length === 0) {
+                result.push(sub);
+            } else {
+                for (let i = 0; i < arr.length; i++) {
+                let current = arr.slice();
+                let next = current.splice(i, 1);
+                perm(current.slice(), sub.concat(next));
+            };
+            };
+        };
+        perm(array);
+        return result;
+        };
+    </pre> 
+
+            </div>
+            <div id="nn-code" class="hidden">
+    <pre>
+        const nearestNeighborpath = (points) => {
+            let progressPoints = points.slice();
+            let newpoints = [points[0]];
+            for(let i = 0; i < points.length-2; i++) {
+                let minDistCoord = progressPoints[i+1];
+                let minDist = distanceHelper([progressPoints[i], 
+                                progressPoints[i+1]]);
+                let newIndex = i+1;
+                for(let j = i+1; j < points.length-1; j++) {
+                    let curDist = distanceHelper([progressPoints[i], 
+                                progressPoints[j]]);
+                    if (minDist > curDist) {
+                        minDist = curDist;
+                        minDistCoord = progressPoints[j];
+                        newIndex = j;
+                    }
+                }
+                progressPoints = swapLines(progressPoints, i+1, newIndex)
+                newpoints.push(minDistCoord);
+            }
+        }
+    </pre>
+            </div>
+            <div id="cs-code" class="hidden">
+    <pre>
+        function primsAlgo(pointsArray) {
+            let mst = [];
+            let length = pointsArray.length;
+
+            let matrix = createMatrix(pointsArray);
+            let vertexes = [0];
+            
+            let edges = [];
+            let visited = [];
+            let minEd = [null,null,null];
+            while (mst.length !== length - 1) {
+                vertexes.forEach((vertex) => {
+                    visited.push(vertex);
+                })
+                for (let i = 0; i < length; i++) {
+                    vertexes.forEach((vertex) => {
+                        if (matrix[vertex][i] !== 0) { 
+                            edges.push([vertex, i, matrix[vertex][i]]); 
+                        }
+                    }) 
+                    }
+                for (let j = 0; j < edges.length; j++) {
+                if (edges[j][2] < minEd[2] && 
+                    visited.indexOf(edges[j][1]) === -1) { 
+                    minEd = edges[j]; 
+                }
+                }
+                edges.splice(edges.indexOf(minEd), 1);
+                mst.push(minEd);  
+                vertexes.push(minEd[0]);
+                vertexes.push(minEd[1]);
+                minEd = [null,null,null];
+            } 
+            return mst.map(edge => { return [edge[0], edge[1]]});
+            }
+    </pre>
+            </div>
+              
+          </div>
+
 
       </div>
     
     
 </body>
 <script src='tsp.js'></script>
-
+<script src='helper.js'></script>
+<!-- <script src='csa.js'></script> -->
 </html>
