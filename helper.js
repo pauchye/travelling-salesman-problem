@@ -67,7 +67,6 @@ const createMatrix = (points) => {
 const drawMatrix = (points) => {
     let matrix = [];
     for(let i = 0; i < points.length; i++){
-        // matrix[i] = []
         for(let j = 0; j < points.length; j++){
             matrix.push([points[i], points[j]])
         }
@@ -174,3 +173,67 @@ const  createMatchingPairs = (verts, points) => {
     }
     return matcingPairs;
 }
+
+
+const buildPath = (tree, points, matches) => {
+    
+    let matchesInt = matches.map((pair) => {
+        return [parseInt(pair[0]), parseInt(pair[1])]
+    })
+
+    matchesInt.forEach((line) => {
+        tree.push(line)
+    })
+
+    let pointsObj = {};
+    points.forEach((point, i) => {
+        pointsObj[i] = [];
+    })
+
+    tree.forEach((line) => {
+        let first = line[0].toString();
+        let second = line[1].toString();
+        pointsObj[first].push(line);
+        pointsObj[second].push(line);
+    })
+
+    let treeStr = [];
+    let queue = [];
+
+    let first = tree[0];
+    queue.push(first[0])
+    queue.push(first[1])
+    treeStr.push(first.toString())
+    let x = 1;
+
+    while(treeStr.length < tree.length-1){
+        let num = queue[queue.length-x];
+        let array = pointsObj[num.toString()];
+        if(array.length === 0){
+            x +=1;
+        } else {
+            x = 1;
+            let pair = array.pop();
+            
+            if(!treeStr.includes(pair.toString())){
+               treeStr.push(pair.toString()) 
+            }
+            if(num !== pair[0]) {
+                queue.push(pair[0])
+            } else {
+                queue.push(pair[1])
+            }
+        }
+    }
+
+    let newQueue = [queue[0]];
+    queue.forEach((num) => {
+        if(!newQueue.includes(num)){
+            newQueue.push(num)
+        }
+    })
+    newQueue.push(newQueue[0]);
+
+   return newQueue;
+}
+
