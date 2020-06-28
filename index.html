@@ -95,8 +95,8 @@
             </div>
             <div id="perm-code" class="hidden">
     <pre>
-        const permutations = (array, memo = {}) => {
-            let result = [];
+        const permutations = (array) => {
+            let output = [];
             const perm = (arr, sub = []) => {
             if (arr.length === 0) {
                 result.push(sub);
@@ -109,7 +109,7 @@
             };
         };
         perm(array);
-        return result;
+        return output;
         };
     </pre> 
 
@@ -140,6 +140,12 @@
     </pre>
             </div>
             <div id="cs-code" class="hidden">
+                <p>red lines represent an approximation matrix</p>
+                <p>purple lines represent a mst</p>
+                <p>large circles represent odd vertexes</p>
+                <p>blue lines represent perfect matches</p>
+                <p>black lines represent the result</p>
+              
     <pre>
         function primsAlgo(pointsArray) {
             let mst = [];
@@ -177,6 +183,7 @@
             return mst.map(edge => { return [edge[0], edge[1]]});
             }
     </pre>
+    <p>inspited by <a href="https://www.youtube.com/watch?v=M5UggIrAOME">link</a> and <a href="https://coderbyte.com/algorithm/find-minimum-spanning-tree-using-prims-algorithm">link</a></p>
             </div>
               
           </div>
