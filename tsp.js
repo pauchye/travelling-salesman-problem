@@ -106,8 +106,8 @@ drawBars(data)
 
 
 const t = d3.transition()
-.duration(2000)
-.delay(2000)
+.duration(600)
+.delay(600)
 .ease(d3.easeLinear);
 
 const svgRoot = document.getElementById('svg')
@@ -117,14 +117,15 @@ let points = [];
 
 const graphRoot = document.getElementById('graph')
 const graph = d3.select(graphRoot)
-//------ drawing circles------
-const drawCircle = (x, y, size) => {
+
+const drawCircle = (x, y, size, num) => {
     console.log('Drawing circle at', x, y, size);
     svg.append("circle")
         .attr('class', 'click-circle')
         .attr("cx", x)
         .attr("cy", y)
         .attr("r", size);
+
 }
 
 const drawHelperCircle = (x, y) => {
@@ -136,12 +137,19 @@ const drawHelperCircle = (x, y) => {
         .attr("r", 15);
 }
 
-svg.on('click', function() {
-    var coords = d3.mouse(this);
-    // console.log('this',this)
-    // console.log(coords);
-    drawCircle(coords[0], coords[1], 7);
+function addPoint(coords) {
+    drawCircle(coords[0], coords[1], 7, points.length);
     points.push(coords);
+}
+
+svg.on('click', function() {
+    let coords = d3.mouse(this);
+    addPoint(coords);
+
+    svg.append('text')
+    .attr('x', coords[0] + 6)
+    .attr('y', coords[1] + 6 )
+    .text(`${points.length}`)
 });
 
 
@@ -152,12 +160,11 @@ const generatePoints = (input) => {
     for(i=0; i <= input; i++){
         let thisX = Math.floor(Math.random() * Math.floor(600));
         let thixY = Math.floor(Math.random() * Math.floor(570));
-        drawCircle(thisX, thixY, 10);
+        drawCircle(thisX, thixY, 7);
         points.push([ thisX, thixY])
     }
 }
 
-//------ drawing lines-----
 const drawLines = (points) => {
     // debugger
     for(i=0; i < points.length - 1; i++){
@@ -211,9 +218,7 @@ const drawHelperLines = (points) => {
 }
 
 const drawPermLines = (points) => {
-    // debugger
     for(i=0; i < points.length - 1; i++){
-        // debugger
         let startX = points[i][0]
         let startY = points[i][1]
         let endX = points[i+1][0]
@@ -222,7 +227,7 @@ const drawPermLines = (points) => {
         svg.append('line')
         .attr('class', 'path-helper')
         .style("stroke", "red")
-        .style("stroke-opacity", .02) 
+        .style("stroke-opacity", .03) 
         .style("stroke-width", 4)
         .attr("x1", startX)
         .attr("y1", startY)
@@ -231,8 +236,6 @@ const drawPermLines = (points) => {
         .transition(t)
         .attr("x2", endX)
         .attr("y2", endY);
-        
-        // duration not working
 
     }   
 }
@@ -325,7 +328,7 @@ const appendPermPath = (path, permPoint) => {
       .attr("fill", "none")
       .attr("stroke", "black")
       .attr("stroke-width", 2.5)
-      .attr("stroke-opacity", .02) 
+      .attr("stroke-opacity", .03) 
       .attr("stroke-linejoin", "round")
       .attr("stroke-linecap", "round")
       .attr("d", drawPermLines(path))
@@ -383,87 +386,119 @@ const permutationsPath = (points) => {
 
 
 const nearestNeighborpath = (points) => {
-    points.push(points[0])
-    appendHelperPath(points, points);
-    let progressPoints = points.slice();
+    let circlePoints = points.slice();
+    circlePoints.push(points[0])
+    appendHelperPath(circlePoints, circlePoints);
+    let progressPoints = circlePoints.slice();
 
-    let newpoints = [points[0]];
+    let newpoints = [circlePoints[0]];
 
-    for(let i = 0; i < points.length-2; i++) {
+    for(let i = 0; i < circlePoints.length-2; i++) {
 
         let minDistCoord = progressPoints[i+1];
         let minDist = distanceHelper([progressPoints[i], progressPoints[i+1]]);
         let newIndex = i+1;
-        for(let j = i+1; j < points.length-1; j++) {
+        for(let j = i+1; j < circlePoints.length-1; j++) {
             let curDist = distanceHelper([progressPoints[i], progressPoints[j]]);
             if (minDist > curDist) {
 
                 minDist = curDist;
                 minDistCoord = progressPoints[j];
                 newIndex = j;
-                
             }
-
         }
         progressPoints = swapLines(progressPoints, i+1, newIndex)
         newpoints.push(minDistCoord);
     }
     newpoints.push(newpoints[0])
-
     let nndist = distanceHelper(newpoints);
     data[2]['value']= parseInt(nndist);
     drawBars(data);
     appendPath(newpoints)
 }
 
-
-const chrisSerd = (points) => {
-    let helperPoints = drawMatrix(points)
+function MSTnDFS(points) {
+    const helperPoints = drawMatrix(points)
     helperPoints.forEach((subHelper) => {
-        appendHelperPath(subHelper, subHelper);   
-       })
-
-    let mst = prims(points);
-    let treePoints = createTreePoints(mst, points);
-    
-
-    treePoints.forEach((subTree) => {
-        appendPurplePath(subTree);   
+        appendHelperPath(subHelper, subHelper);
     })
 
-    let oddVerts = findOddVerts(mst);
-    oddVerts.forEach((vert) => {
-        let point = points[vert]
-        let thisX = point[0];
-        let thixY = point[1];
-        drawHelperCircle(thisX, thixY);
-    })
+    const {path, root} = generateMST(points);
+    const walkIndexes = depthFirstMSTWalk(root);
+    const prunedIndexes = pruneDepthFirstWalk(walkIndexes);
+    const fullWalk = prunedIndexes.concat([0]);
+    pathToPoints(path, points).forEach(pair => setTimeout(() => {appendPurplePath(pair)}, 600));
 
-    let matchingPairs = createMatchingPairs(oddVerts, points);
+    for (let i = 1; i < fullWalk.length; i++) {
+        setTimeout(() => {appendPath([points[fullWalk[i-1]], points[fullWalk[i]] ])}, 1200)
+        
+    }
 
-    matchingPairs.forEach((pair) => {
-
-        let convertedPair = pair.map( (el) => { return points[parseInt(el)] } )
-        appendMatchPath(convertedPair)
-    })
-    let pointsTrial = buildPath(mst, points, matchingPairs);
-    let convertedSub = pointsTrial.map( (el) => { return points[parseInt(el)] } )
-    appendPath(convertedSub);   
+    let convertedSub = fullWalk.map( (el) => { return points[parseInt(el)] } )
 
     let mstdist = distanceHelper(convertedSub);
     data[3]['value']= parseInt(mstdist);
     drawBars(data);
-
 }
 
+const chrisSerd = (points) => {
 
-// d3.select('#random').on('click', appendPath(points));
+    MSTnDFS(points);
+
+    // const {path, root} = generateMST(points);
+    // const oddDegreeIndexes = findOddDegreeIndexes(root);
+
+    // console.log('oddDegreeIndexes:', oddDegreeIndexes);
+    // const pairings = findPerfectPairingIndexes(points, oddDegreeIndexes, path);
+    // console.log('pairings:', pairings);
+    // const fullPath = path.concat(pairings);
+    // console.log('fullPath:', fullPath);
+    // pathToPoints(fullPath, points).forEach(pair => appendPath(pair));
+//--------
+    // let helperPoints = drawMatrix(points)
+    // helperPoints.forEach((subHelper) => {
+    //     appendHelperPath(subHelper, subHelper);
+    //    })
+    //
+    // let mst = prims(points);
+    // let treePoints = createTreePoints(mst, points);
+    //
+    //
+    // treePoints.forEach((subTree) => {
+    //     appendPurplePath(subTree);
+    // })
+    //
+    // let oddVerts = findOddVerts(mst);
+    // oddVerts.forEach((vert) => {
+    //     let point = points[vert]
+    //     let thisX = point[0];
+    //     let thixY = point[1];
+    //     drawHelperCircle(thisX, thixY);
+    // })
+    //
+    // let matchingPairs = createMatchingPairs(oddVerts, points);
+    //
+    // matchingPairs.forEach((pair) => {
+    //
+    //     let convertedPair = pair.map( (el) => { return points[parseInt(el)] } )
+    //     appendMatchPath(convertedPair)
+    // })
+    // let pointsTrial = buildPath(mst, points, matchingPairs);
+    // let convertedSub = pointsTrial.map( (el) => { return points[parseInt(el)] } )
+    // appendPath(convertedSub);
+    //
+    // let mstdist = distanceHelper(convertedSub);
+    // data[3]['value']= parseInt(mstdist);
+    // drawBars(data);
+}
+
 d3.select('#random')
   .on('click', () => {
-    svg.selectAll('line').remove();   
-    points.push(points[0])
-    appendPath(points)
-    let dist = distanceHelper(points);
+    svg.selectAll('line').remove();  
+    let newpoints = points.slice();
+    newpoints.push(points[0])
+    appendPath(newpoints)
+    let dist = distanceHelper(newpoints);
     data[0]['value']= dist;
     drawBars(data);
     let randText = document.getElementById("random-text");
@@ -486,12 +521,28 @@ d3.select('#random')
 
 d3.select('#permutations')
   .on('click', () => {   
-    if(points.length > 7){
+    svg.selectAll('line').remove();  
+    if(points.length > 10){
         alert("Too many points for this slow algorithm. Sorry")
-    } else {
-        svg.selectAll('line').remove();
-        permutationsPath(points)   
-    }
+    } else if(points.length < 7){
+        const solution = shortestPathBruteforce(points);
+        solution.all.forEach(path => setTimeout(() => {appendPermPath(path)}, 300) )
+        setTimeout(() => {
+            appendPath(solution.shortestPath);
+            let dist = distanceHelper(solution.shortestPath);
+            data[1]['value']= dist;
+            drawBars(data);
+        }, 800);
+    }else{
+        const solution = shortestPathBruteforce(points);
+            appendPath(solution.shortestPath);
+            let dist = distanceHelper(solution.shortestPath);
+            data[1]['value']= dist;
+            drawBars(data);        
+    };
+   
+    
+
     let randText = document.getElementById("random-text");
     let randCode = document.getElementById("random-code");
     randText.classList.remove("visible");
@@ -532,10 +583,10 @@ d3.select('#nearestneighbor')
     csCode.classList.remove("visible");
 });
 
-d3.select('#christofides–serdyukov')
+d3.select('#mstdfs')
   .on('click', () => {
     svg.selectAll('line').remove();   
-    chrisSerd(points)
+    MSTnDFS(points);
     let randText = document.getElementById("random-text");
     let randCode = document.getElementById("random-code");
     randText.classList.remove("visible");
@@ -559,6 +610,7 @@ d3.select('#christofides–serdyukov')
 d3.select('#clear')
   .on('click', () => {
     svg.selectAll('circle').remove();
+    svg.selectAll('text').remove();
     svg.selectAll('line').remove();   
     points=[];
     data[0]['value']= 0;
@@ -586,6 +638,7 @@ d3.select('#clear')
 
 
 d3.select("#range").on("input", () => {
+    svg.selectAll('text').remove();
     let rangeVal;
     rangeVal = document.getElementById("range").value;
     generatePoints(rangeVal);

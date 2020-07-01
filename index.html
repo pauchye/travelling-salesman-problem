@@ -8,6 +8,7 @@
     <script src="https://d3js.org/d3-transition.v1.min.js"></script>
     <script src="https://kit.fontawesome.com/080cd15705.js" crossorigin="anonymous"></script>
     <title>Document</title>
+    <link rel="shortcut icon" href="favicon.ico" />
     <style>
 
         .axis {
@@ -35,7 +36,8 @@
     
       <div class="css-right">
           <div>
-                <h3>Travelling salesman problem</h3>
+                <h3>Travelling salesperson problem</h3>
+                <p>Please click on the white screen or use input range to place points randomly</p>
           </div>
           <div>
             <input id="range" type="range" value=0 min=1 max=30 class="slider">
@@ -44,7 +46,7 @@
               <button id="random">random</button>
               <button id="permutations">permutations</button>
               <button id="nearestneighbor">nearest neighbor</button>
-              <button id="christofides–serdyukov">MST-DFS</button>  
+              <button id="mstdfs">MST-DFS</button>  
             </div>
             
           </div>
@@ -95,95 +97,112 @@
             </div>
             <div id="perm-code" class="hidden">
     <pre>
-        const permutations = (array) => {
-            let output = [];
-            const perm = (arr, sub = []) => {
-            if (arr.length === 0) {
-                result.push(sub);
-            } else {
-                for (let i = 0; i < arr.length; i++) {
-                let current = arr.slice();
-                let next = current.splice(i, 1);
-                perm(current.slice(), sub.concat(next));
-            };
-            };
-        };
-        perm(array);
-        return output;
-        };
+        <span style="color:red; font-weight: 700;">Red</span> lines represent potential options
+
+        <span style="font-weight: 700;">Black</span> lines represent the result
+
+        <span style="font-weight: 700;">No potential options for > 7 points</span> 
+
+    function generateIndexPerm(array) {
+        switch (array.length) {
+            case 1:
+                return array;
+            case 2:
+                const [a, b] = array;
+                return [[a, b], [b, a]];
+            default:
+                const result = [];
+                array.forEach((x, i) => {
+                    const head = array.slice(0, i);
+                    const tail = array.slice(i + 1);
+                    generateIndexPerm(head.concat(tail)).map(p => 
+                    [x].concat(p)).forEach(p => result.push(p));
+                });
+                return result;
+        }
+    }
+
     </pre> 
 
             </div>
             <div id="nn-code" class="hidden">
     <pre>
-        const nearestNeighborpath = (points) => {
-            let progressPoints = points.slice();
-            let newpoints = [points[0]];
-            for(let i = 0; i < points.length-2; i++) {
-                let minDistCoord = progressPoints[i+1];
-                let minDist = distanceHelper([progressPoints[i], 
-                                progressPoints[i+1]]);
-                let newIndex = i+1;
-                for(let j = i+1; j < points.length-1; j++) {
-                    let curDist = distanceHelper([progressPoints[i], 
-                                progressPoints[j]]);
-                    if (minDist > curDist) {
-                        minDist = curDist;
-                        minDistCoord = progressPoints[j];
-                        newIndex = j;
-                    }
+    const nearestNeighborpath = (points) => {
+        let progressPoints = points.slice();
+        let newpoints = [points[0]];
+        for(let i = 0; i < points.length-2; i++) {
+            let minDistCoord = progressPoints[i+1];
+            let minDist = distanceHelper([progressPoints[i], 
+                            progressPoints[i+1]]);
+            let newIndex = i+1;
+            for(let j = i+1; j < points.length-1; j++) {
+                let curDist = distanceHelper([progressPoints[i], 
+                            progressPoints[j]]);
+                if (minDist > curDist) {
+                    minDist = curDist;
+                    minDistCoord = progressPoints[j];
+                    newIndex = j;
                 }
-                progressPoints = swapLines(progressPoints, i+1, newIndex)
-                newpoints.push(minDistCoord);
             }
+            progressPoints = swapLines(progressPoints, i+1, newIndex)
+            newpoints.push(minDistCoord);
         }
+    }
     </pre>
             </div>
             <div id="cs-code" class="hidden">
-                <p>red lines represent an approximation matrix</p>
-                <p>purple lines represent a mst</p>
-                <p>large circles represent odd vertexes</p>
-                <p>blue lines represent perfect matches</p>
-                <p>black lines represent the result</p>
+                <p> <span style="color:red; font-weight: 700;">Red</span> lines represent an approximation matrix</p>
+                <p> <span style="color:purple; font-weight: 700;">Purple</span> lines represent a mst</p>
+                <!-- <p>large circles represent odd vertexes</p>
+                <p>blue lines represent perfect matches</p> -->
+                <p><span style="font-weight: 700;">Black</span> lines represent the result</p>
               
     <pre>
-        function primsAlgo(pointsArray) {
-            let mst = [];
-            let length = pointsArray.length;
 
-            let matrix = createMatrix(pointsArray);
-            let vertexes = [0];
-            
-            let edges = [];
-            let visited = [];
-            let minEd = [null,null,null];
-            while (mst.length !== length - 1) {
-                vertexes.forEach((vertex) => {
-                    visited.push(vertex);
-                })
-                for (let i = 0; i < length; i++) {
-                    vertexes.forEach((vertex) => {
-                        if (matrix[vertex][i] !== 0) { 
-                            edges.push([vertex, i, matrix[vertex][i]]); 
-                        }
-                    }) 
-                    }
-                for (let j = 0; j < edges.length; j++) {
-                if (edges[j][2] < minEd[2] && 
-                    visited.indexOf(edges[j][1]) === -1) { 
-                    minEd = edges[j]; 
+function generateMST(points) {
+    const visIdx = [0];
+    let unvisIdx = seq(1, points.length);
+    const path = [];     
+    while(unvisIdx.length > 0) {
+        let from = null;
+        let to = null;
+        let shortestDistance = Number.MAX_VALUE;
+        for (let i = 0; i < visIdx.length; i++) {
+            for (let j = 0; j < unvisIdx.length; j++) {
+                const dist = distance(points[visIdx[i]], 
+                points[unvisIdx[j]])
+                if (dist < shortestDistance) {
+                    shortestDistance = dist;
+                    from = i;
+                    to = j;
                 }
-                }
-                edges.splice(edges.indexOf(minEd), 1);
-                mst.push(minEd);  
-                vertexes.push(minEd[0]);
-                vertexes.push(minEd[1]);
-                minEd = [null,null,null];
-            } 
-            return mst.map(edge => { return [edge[0], edge[1]]});
             }
+        }       
+        path.push([visIdx[from], unvisIdx[to]]);
+        visIdx.push(unvisIdx[to]);
+        unvisIdx = unvisIdx.slice(0, to).concat(unvisIdx.slice(to + 1));
+    }        
+    const root = {
+        idx: 0,
+        children: []
+    }        
+    const nodes = {0: root};
+    path.forEach(([from, to]) => {
+        const toNode = {
+            idx: to,
+            children: []
+        }
+        const fromNode = nodes[from];
+        fromNode.children.push(toNode);
+        nodes[to] = toNode;
+    });       
+    return {
+        path,
+        root
+    };
+}
     </pre>
-    <p>inspited by <a href="https://www.youtube.com/watch?v=M5UggIrAOME">link</a> and <a href="https://coderbyte.com/algorithm/find-minimum-spanning-tree-using-prims-algorithm">link</a></p>
+    <p>inspited by <a href="https://www.youtube.com/watch?v=M5UggIrAOME">link</a></p>
             </div>
               
           </div>
