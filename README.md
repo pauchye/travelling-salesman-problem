@@ -2,6 +2,7 @@
 ## Background and Overview 
 [Travelling_salesman_problem](https://en.wikipedia.org/wiki/Travelling_salesman_problem)
 - visualization of the travelling salesman problem
+![](chrome-tsp.gif)
 ## Functionality and MVPs 
 ### screen 
 * user can create circles on click
