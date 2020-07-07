@@ -46,7 +46,8 @@
               <button id="random">random</button>
               <button id="permutations">permutations</button>
               <button id="nearestneighbor">nearest neighbor</button>
-              <button id="mstdfs">MST-DFS</button>  
+              <button id="mstdfs">MST-DFS</button> 
+              <button id="christ">Christofidis</button>  
             </div>
             
           </div>
@@ -75,12 +76,12 @@
                 <a href="https://en.wikipedia.org/wiki/Nearest_neighbour_algorithm"> Read more </a>
                 </p>
               </div>
-              <div id="cs-text" class="hidden">
+              <div id="mst-text" class="hidden">
                   <p>
                   MST-DFS algorithm is an approximation algorithm that falls approximatly between 1 to 2 of the optimal solution length.
                   </p>
               </div>
-              <div  class="hidden">
+              <div id="cs-text" class="hidden">
                 <p>
                 Christofides–Serdyukov algorithm is an approximation algorithm that guarantees that its solutions will be within 
                 a factor of 3/2 of the optimal solution length.
@@ -150,7 +151,7 @@
     }
     </pre>
             </div>
-            <div id="cs-code" class="hidden">
+            <div id="mst-code" class="hidden">
                 <p> <span style="color:red; font-weight: 700;">Red</span> lines represent an approximation matrix</p>
                 <p> <span style="color:purple; font-weight: 700;">Purple</span> lines represent a mst</p>
                 <!-- <p>large circles represent odd vertexes</p>
@@ -204,7 +205,47 @@ function generateMST(points) {
     </pre>
     <p>inspited by <a href="https://www.youtube.com/watch?v=M5UggIrAOME">link</a></p>
             </div>
+            <div id="cs-code" class="hidden">
+                <p> <span style="color:red; font-weight: 700;">Red</span> lines represent an approximation matrix</p>
+                <p> <span style="color:purple; font-weight: 700;">Purple</span> lines represent a mst</p>
+                <p> <span style="color:red; font-weight: 700;">Red</span> circles represent odd vertexes</p>
+                <p> <span style="color:blue; font-weight: 700;">Blue</span> lines represent perfect matches</p>
+                <p><span style="font-weight: 700;">Black</span> lines represent the result</p>
               
+    <pre>
+function findOddDegreeIndexes(root, isRoot = true) {
+    let indices = [];
+    if (root.children.length % 2 === (isRoot ? 1 : 0)) {
+        indices.push(root.idx);
+    }
+    root.children.map(child => {
+        indices = indices.concat(findOddDegreeIndexes(child, false));
+    });
+    return indices;
+}
+
+function findPerfectPairingIndexes(points, indexes, mstPath) {
+    let pairings = [];
+    while(indexes.length > 0) {
+        let from = indexes[0];
+        let to = null;
+        let shortestDistance = Number.MAX_VALUE;
+        for (let i = 1; i < indexes.length; i++) {
+            const dist = distance(points[from], points[indexes[i]]);
+            if (dist < shortestDistance && 
+                !mstPath.find(([f1, t1]) => f1 === from && t1 === indexes[i])) {
+                shortestDistance = dist;
+                to = i;
+            }
+        }
+        pairings.push([from, indexes[to]]);
+        indexes = indexes.slice(1, to).concat(indexes.slice(to + 1));
+    }
+    return pairings.filter((pair) => (pair[1]));
+}
+    </pre>
+    <p>inspited by <a href="https://www.youtube.com/watch?v=M5UggIrAOME">link</a></p>
+            </div>
           </div>
 
 

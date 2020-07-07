@@ -13,6 +13,10 @@ let data = [{
 {
     "name": "MST-DFS",
     "value": 0,
+},
+{
+    "name": "Christofides–Serdyukov",
+    "value": 0,
 }];
 
 
@@ -125,7 +129,6 @@ const drawCircle = (x, y, size, num) => {
         .attr("cx", x)
         .attr("cy", y)
         .attr("r", size);
-
 }
 
 const drawHelperCircle = (x, y) => {
@@ -134,7 +137,9 @@ const drawHelperCircle = (x, y) => {
         .attr('class', 'helper-circle')
         .attr("cx", x)
         .attr("cy", y)
-        .attr("r", 15);
+        .attr("r", 15)
+        .attr("fill", 'red')
+        .attr("fill-opacity", 0.5);
 }
 
 function addPoint(coords) {
@@ -252,7 +257,7 @@ const drawMatchLines = (points) => {
         svg.append('line')
         .attr('class', 'path-helper')
         .style("stroke", "blue")
-        .style("stroke-opacity", .7) 
+        .style("stroke-opacity", .4) 
         .style("stroke-width", 12)
         .attr("x1", startX)
         .attr("y1", startY)
@@ -414,7 +419,20 @@ const nearestNeighborpath = (points) => {
     let nndist = distanceHelper(newpoints);
     data[2]['value']= parseInt(nndist);
     drawBars(data);
-    appendPath(newpoints)
+    let pointsArray = [];
+    for(let i = 0; i < newpoints.length-1; i++){
+        pointsArray.push([newpoints[i], newpoints[i+1]])
+    }
+    // for(let j = 0; j < pointsArray.length; j++){
+    //     setTimeout(()=>{
+    //         appendPath(pointsArray[j])
+    //     }, 500)
+    // }
+    pointsArray.forEach((pair) => {
+        setTimeout(()=>{
+            appendPath(pair)
+        }, 400)
+    })
 }
 
 function MSTnDFS(points) {
@@ -430,12 +448,10 @@ function MSTnDFS(points) {
     pathToPoints(path, points).forEach(pair => setTimeout(() => {appendPurplePath(pair)}, 600));
 
     for (let i = 1; i < fullWalk.length; i++) {
-        setTimeout(() => {appendPath([points[fullWalk[i-1]], points[fullWalk[i]] ])}, 1200)
-        
+        setTimeout(() => {appendPath([points[fullWalk[i-1]], points[fullWalk[i]] ])}, 1200)     
     }
 
     let convertedSub = fullWalk.map( (el) => { return points[parseInt(el)] } )
-
     let mstdist = distanceHelper(convertedSub);
     data[3]['value']= parseInt(mstdist);
     drawBars(data);
@@ -443,58 +459,80 @@ function MSTnDFS(points) {
 
 const chrisSerd = (points) => {
 
-    MSTnDFS(points);
+    const helperPoints = drawMatrix(points)
+    helperPoints.forEach((subHelper) => {
+        appendHelperPath(subHelper, subHelper);
+    })
 
-    // const {path, root} = generateMST(points);
-    // const oddDegreeIndexes = findOddDegreeIndexes(root);
+    const {path, root} = generateMST(points);
+    pathToPoints(path, points).forEach(pair => setTimeout(() => {appendPurplePath(pair)}, 300));
 
-    // console.log('oddDegreeIndexes:', oddDegreeIndexes);
-    // const pairings = findPerfectPairingIndexes(points, oddDegreeIndexes, path);
-    // console.log('pairings:', pairings);
-    // const fullPath = path.concat(pairings);
-    // console.log('fullPath:', fullPath);
-    // pathToPoints(fullPath, points).forEach(pair => appendPath(pair));
-//--------
-    // let helperPoints = drawMatrix(points)
-    // helperPoints.forEach((subHelper) => {
-    //     appendHelperPath(subHelper, subHelper);
-    //    })
-    //
-    // let mst = prims(points);
-    // let treePoints = createTreePoints(mst, points);
-    //
-    //
-    // treePoints.forEach((subTree) => {
-    //     appendPurplePath(subTree);
-    // })
-    //
-    // let oddVerts = findOddVerts(mst);
-    // oddVerts.forEach((vert) => {
-    //     let point = points[vert]
-    //     let thisX = point[0];
-    //     let thixY = point[1];
-    //     drawHelperCircle(thisX, thixY);
-    // })
-    //
-    // let matchingPairs = createMatchingPairs(oddVerts, points);
-    //
-    // matchingPairs.forEach((pair) => {
-    //
-    //     let convertedPair = pair.map( (el) => { return points[parseInt(el)] } )
-    //     appendMatchPath(convertedPair)
-    // })
-    // let pointsTrial = buildPath(mst, points, matchingPairs);
-    // let convertedSub = pointsTrial.map( (el) => { return points[parseInt(el)] } )
-    // appendPath(convertedSub);
-    //
-    // let mstdist = distanceHelper(convertedSub);
-    // data[3]['value']= parseInt(mstdist);
-    // drawBars(data);
+    const oddDegreeIndexes = findOddDegreeIndexes(root);
+    oddDegreeIndexes.forEach((vert) => setTimeout(() => {
+        let point = points[vert]
+        let thisX = point[0];
+        let thixY = point[1];
+        drawHelperCircle(thisX, thixY);
+    }, 400));
+
+    const pairings = findPerfectPairingIndexes(points, oddDegreeIndexes, path);
+    pairings.forEach((pair) => setTimeout(() => {
+        let convertedPair = pair.map( (el) => { return points[parseInt(el)] } )
+        appendMatchPath(convertedPair)
+    }, 550));
+    
+    const fullPath = path.concat(pairings);
+    const {fullroot} = createGraph(fullPath);
+
+    const walkIndexes = depthFirstMSTWalk(fullroot);
+    let prunedIndexes = pruneDepthFirstWalk(walkIndexes);
+    prunedIndexes.push(prunedIndexes[0]);
+    let chrisPath = [];
+    for(let i=0; i < prunedIndexes.length-1; i++){
+        chrisPath.push([prunedIndexes[i], prunedIndexes[i+1]])
+    }
+
+    let convertedPath = pathToPoints(chrisPath, points);
+    convertedPath.forEach(pair => setTimeout(() => {appendPath(pair)}, 800));
+ 
+    let convertedSub = chrisPath.map( (el) => { return points[parseInt(el)] } )   
+    convertedSub.push(convertedSub[0])
+    let scdist = distanceHelper(convertedSub);
+    data[4]['value']= parseInt(scdist);
+    drawBars(data);
+}
+
+function cleanScreen(){
+    svg.selectAll('line').remove();  
+    // svg.selectAll('circle').filter("fill", "red").remove(); 
+    let circles = document.getElementsByClassName("helper-circle");
+    // console.log('circles',circles) 
+    [...circles].forEach(circle => circle.remove());
+    let randText = document.getElementById("random-text");
+    let randCode = document.getElementById("random-code");
+    randText.classList.remove("visible");
+    randCode.classList.remove("visible");
+    let permText = document.getElementById("perm-text");
+    let permCode = document.getElementById("perm-code");
+    permText.classList.remove("visible");
+    permCode.classList.remove("visible");
+    let nnText = document.getElementById("nn-text");
+    let nnCode = document.getElementById("nn-code");
+    nnText.classList.remove("visible");
+    nnCode.classList.remove("visible");
+    let mstText = document.getElementById("mst-text");
+    let mstCode = document.getElementById("mst-code");
+    mstText.classList.remove("visible");
+    mstCode.classList.remove("visible");
+    let csText = document.getElementById("cs-text");
+    let csCode = document.getElementById("cs-code");
+    csText.classList.remove("visible");
+    csCode.classList.remove("visible");
 }
 
 d3.select('#random')
   .on('click', () => {
-    svg.selectAll('line').remove();  
+    cleanScreen();
     let newpoints = points.slice();
     newpoints.push(points[0])
     appendPath(newpoints)
@@ -505,23 +543,11 @@ d3.select('#random')
     let randCode = document.getElementById("random-code");
     randText.classList.add("visible");
     randCode.classList.add("visible");
-    let permText = document.getElementById("perm-text");
-    let permCode = document.getElementById("perm-code");
-    permText.classList.remove("visible");
-    permCode.classList.remove("visible");
-    let nnText = document.getElementById("nn-text");
-    let nnCode = document.getElementById("nn-code");
-    nnText.classList.remove("visible");
-    nnCode.classList.remove("visible");
-    let csText = document.getElementById("cs-text");
-    let csCode = document.getElementById("cs-code");
-    csText.classList.remove("visible");
-    csCode.classList.remove("visible");
 });
 
 d3.select('#permutations')
   .on('click', () => {   
-    svg.selectAll('line').remove();  
+    cleanScreen();
     if(points.length > 10){
         alert("Too many points for this slow algorithm. Sorry")
     } else if(points.length < 7){
@@ -541,64 +567,38 @@ d3.select('#permutations')
             drawBars(data);        
     };
    
-    
-
-    let randText = document.getElementById("random-text");
-    let randCode = document.getElementById("random-code");
-    randText.classList.remove("visible");
-    randCode.classList.remove("visible");
     let permText = document.getElementById("perm-text");
     let permCode = document.getElementById("perm-code");
     permText.classList.add("visible");
     permCode.classList.add("visible");
-    let nnText = document.getElementById("nn-text");
-    let nnCode = document.getElementById("nn-code");
-    nnText.classList.remove("visible");
-    nnCode.classList.remove("visible");
-    let csText = document.getElementById("cs-text");
-    let csCode = document.getElementById("cs-code");
-    csText.classList.remove("visible");
-    csCode.classList.remove("visible");
 });
 
 d3.select('#nearestneighbor')
   .on('click', () => {
-    svg.selectAll('line').remove();   
+    cleanScreen();   
     nearestNeighborpath(points)
-    let randText = document.getElementById("random-text");
-    let randCode = document.getElementById("random-code");
-    randText.classList.remove("visible");
-    randCode.classList.remove("visible");
-    let permText = document.getElementById("perm-text");
-    let permCode = document.getElementById("perm-code");
-    permText.classList.remove("visible");
-    permCode.classList.remove("visible");
     let nnText = document.getElementById("nn-text");
     let nnCode = document.getElementById("nn-code");
     nnText.classList.add("visible");
     nnCode.classList.add("visible");
-    let csText = document.getElementById("cs-text");
-    let csCode = document.getElementById("cs-code");
-    csText.classList.remove("visible");
-    csCode.classList.remove("visible");
 });
 
 d3.select('#mstdfs')
   .on('click', () => {
-    svg.selectAll('line').remove();   
+    cleanScreen(); 
     MSTnDFS(points);
-    let randText = document.getElementById("random-text");
-    let randCode = document.getElementById("random-code");
-    randText.classList.remove("visible");
-    randCode.classList.remove("visible");
-    let permText = document.getElementById("perm-text");
-    let permCode = document.getElementById("perm-code");
-    permText.classList.remove("visible");
-    permCode.classList.remove("visible");
-    let nnText = document.getElementById("nn-text");
-    let nnCode = document.getElementById("nn-code");
-    nnText.classList.remove("visible");
-    nnCode.classList.remove("visible");
+    let mstText = document.getElementById("mst-text");
+    let mstCode = document.getElementById("mst-code");
+    mstText.classList.add("visible");
+    mstCode.classList.add("visible");
+
+});
+
+d3.select('#christ')
+  .on('click', () => {
+    cleanScreen();   
+    // svg.selectAll('circle[style = "fill: red;"]')
+    chrisSerd(points);
     let csText = document.getElementById("cs-text");
     let csCode = document.getElementById("cs-code");
     csText.classList.add("visible");
@@ -606,38 +606,28 @@ d3.select('#mstdfs')
 
 });
 
-
 d3.select('#clear')
   .on('click', () => {
     svg.selectAll('circle').remove();
     svg.selectAll('text').remove();
-    svg.selectAll('line').remove();   
+    cleanScreen();
     points=[];
     data[0]['value']= 0;
     data[1]['value']= 0;
     data[2]['value']= 0;
     data[3]['value']= 0;
+    data[4]['value']= 0;
     drawBars(data);
-    let randText = document.getElementById("random-text");
-    let randCode = document.getElementById("random-code");
-    randText.classList.remove("visible");
-    randCode.classList.remove("visible");
-    let permText = document.getElementById("perm-text");
-    let permCode = document.getElementById("perm-code");
-    permText.classList.remove("visible");
-    permCode.classList.remove("visible");
-    let nnText = document.getElementById("nn-text");
-    let nnCode = document.getElementById("nn-code");
-    nnText.classList.remove("visible");
-    nnCode.classList.remove("visible");
-    let csText = document.getElementById("cs-text");
-    let csCode = document.getElementById("cs-code");
-    csText.classList.remove("visible");
-    csCode.classList.remove("visible");
 });
 
 
 d3.select("#range").on("input", () => {
+    data[0]['value']= 0;
+    data[1]['value']= 0;
+    data[2]['value']= 0;
+    data[3]['value']= 0;
+    data[4]['value']= 0;
+    drawBars(data);
     svg.selectAll('text').remove();
     let rangeVal;
     rangeVal = document.getElementById("range").value;

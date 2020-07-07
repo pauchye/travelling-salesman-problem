@@ -386,6 +386,31 @@ function generateMST(points) {
     };
 }
 
+function createGraph(fullpath){
+    const fullroot = {
+        idx: 0,
+        children: []
+    }
+
+    const nodes = {0: fullroot};
+    fullpath.forEach(([from, to]) => {
+        const toNode = {
+            idx: to,
+            children: []
+        }
+        const fromNode = nodes[from];
+        fromNode.children.push(toNode);
+        nodes[to] = toNode;
+    });
+
+    return {
+        fullpath,
+        fullroot,
+        nodes
+    };
+    
+}
+
 function pathToPoints(path, points) {
     return path.map(indexes => indexes.map(i => points[i]));
 }
@@ -446,7 +471,7 @@ function findPerfectPairingIndexes(points, indexes, mstPath) {
         indexes = indexes.slice(1, to).concat(indexes.slice(to + 1));
     }
 
-    return pairings;
+    return pairings.filter((pair) => (pair[1]));
 }
 
 function MST2indices(root) {
